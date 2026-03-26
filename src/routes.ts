@@ -23,6 +23,7 @@ import MyParty from './pages/mypage/MyParty';
 import MyHistory from './pages/mypage/MyHistory';
 import MyReport from './pages/mypage/MyReport';
 import MyPayment from './pages/mypage/MyPayment';
+import Home from './pages/Home';
 
 const router = createBrowserRouter([
   // ── 1. 풀스크린 레이아웃 그룹 (App.tsx 사용) ───────────────────
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
       {
         index: true,
         Component: Landing,
+      },
+      {
+        path: 'home',
+        Component: Home,
       },
       {
         path: 'login',
