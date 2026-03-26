@@ -3,9 +3,11 @@ import type { PartyListResponse, Party, SystemNotification, Category } from '../
 
 export const partyKeys = {
   all: ['parties'] as const,
-  list: (categoryId: number | null, search: string) =>
+  // [수정] categoryId 타입을 string | null로 변경
+  list: (categoryId: string | null, search: string) =>
     ['parties', 'list', categoryId, search] as const,
-  detail: (id: number) => ['parties', id] as const,
+  // [수정] id 타입을 string으로 변경
+  detail: (id: string) => ['parties', id] as const,
 };
 
 export const notificationKeys = {
@@ -22,7 +24,8 @@ export const fetchCategories = async (): Promise<Category[]> => {
 };
 
 export const fetchParties = async (params: {
-  category_id?: number;
+  // [수정] category_id 타입을 string으로 변경
+  category_id?: string;
   search?: string;
   page?: number;
   size?: number;
@@ -31,12 +34,13 @@ export const fetchParties = async (params: {
   return data;
 };
 
-export const fetchParty = async (id: number): Promise<Party> => {
+export const fetchParty = async (id: string): Promise<Party> => {
   const { data } = await api.get(`/parties/${id}`);
   return data;
 };
 
-export const applyParty = async (partyId: number): Promise<{ message: string }> => {
+// [수정] partyId 타입을 string으로 변경
+export const applyParty = async (partyId: string): Promise<{ message: string }> => {
   const { data } = await api.post(`/parties/${partyId}/join`);
   return data;
 };

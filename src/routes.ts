@@ -1,9 +1,7 @@
 import { createBrowserRouter, redirect } from 'react-router';
-// 레이아웃 컴포넌트
-import App from './App'; // 풀스크린 (Navbar/Footer/Sidebar 없음)
-import AppShell from './AppShell'; // Sidebar + Header 포함 레이아웃
+import App from './App';
+import AppShell from './AppShell';
 
-// 일반 페이지
 import Landing from './pages/landing/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -12,22 +10,19 @@ import Favor from './pages/Favor';
 import HandOcrCaptcha from './pages/hand-ocr-captcha/HandOcrCaptcha';
 import Chat from './pages/Chat';
 
-// 사이드바가 필요한 페이지
 import Profile from './pages/Profile';
 import Report from './pages/Report';
 import Party from './pages/Party';
+import Home from './pages/Home';
 
-// 마이페이지 관련
 import Me from './pages/mypage/Me';
 import MyParty from './pages/mypage/MyParty';
 import MyHistory from './pages/mypage/MyHistory';
 import MyReport from './pages/mypage/MyReport';
 import MyPayment from './pages/mypage/MyPayment';
-import Home from './pages/Home';
 
 const router = createBrowserRouter([
-  // ── 1. 풀스크린 레이아웃 그룹 (App.tsx 사용) ───────────────────
-  // 배경을 꽉 채우거나, 사이드바가 방해되는 페이지들
+  // ── 1. 풀스크린 레이아웃 그룹 (Header + Footer, Sidebar 없음) ──
   {
     path: '/',
     Component: App,
@@ -35,10 +30,6 @@ const router = createBrowserRouter([
       {
         index: true,
         Component: Landing,
-      },
-      {
-        path: 'home',
-        Component: Home,
       },
       {
         path: 'login',
@@ -67,12 +58,16 @@ const router = createBrowserRouter([
     ],
   },
 
-  // ── 2. 사이드바 + 헤더 레이아웃 그룹 (AppShell.tsx 사용) ──────
-  // 대시보드 형태나 서비스 메인 기능을 이용하는 페이지들
+  // ── 2. 사이드바 + 헤더 레이아웃 그룹 (AppShell) ──
   {
     path: '/',
     Component: AppShell,
     children: [
+      {
+        // ✅ Fix: Home을 AppShell 레이아웃으로 이동 (내부에서 Sidebar/Header 직접 렌더링하지 않음)
+        path: 'home',
+        Component: Home,
+      },
       {
         path: 'profile/:userId',
         Component: Profile,
@@ -85,7 +80,6 @@ const router = createBrowserRouter([
         path: 'party/:partyId',
         Component: Party,
       },
-      // 마이 페이지 중첩 라우팅
       {
         path: 'mypage',
         Component: Me,
