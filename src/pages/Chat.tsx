@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { api } from '../libs/api';
 
@@ -39,13 +39,12 @@ export default function Chat() {
   const [roomId, setRoomId] = useState<number | null>(null);
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
   const [connected, setConnected] = useState(false);
-  // ✅ Fix: localStorage 접근을 렌더 외부에서 안전하게 처리
   const [nickname] = useState(() => localStorage.getItem('nickname') ?? '익명');
   const [userId] = useState(() => localStorage.getItem('user_id') ?? 'guest');
 
   const wsRef = useRef<WebSocket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const connectedRef = useRef(false);
+  const connectedRef = useRef(false); // 중복 연결 방지
 
   // 채팅방 생성/조회
   useEffect(() => {
@@ -57,18 +56,19 @@ export default function Chat() {
     api.get(`/chat/rooms/${partyId}/info`)
       .then(({ data }) => setRoomInfo(data))
       .catch(() => {});
-  // ✅ Fix: navigate를 deps에 추가
-  }, [partyId, navigate]);
+  }, [partyId]);
 
   // WebSocket 연결
   useEffect(() => {
     if (!roomId) return;
-    if (connectedRef.current) return;
+    if (connectedRef.current) return; // 이미 연결됐으면 스킵
     connectedRef.current = true;
 
+    // 이전 메시지 로드
     api.get(`/chat/rooms/${roomId}/messages`)
       .then(({ data }) => setMessages(data));
 
+    // 기존 연결 정리
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
@@ -94,20 +94,18 @@ export default function Chat() {
       wsRef.current = null;
       connectedRef.current = false;
     };
-  // ✅ Fix: nickname, userId를 deps에 추가
-  }, [roomId, nickname, userId]);
+  }, [roomId]);
 
   // 스크롤 하단
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // ✅ Fix: useCallback으로 sendMessage 메모이제이션
-  const sendMessage = useCallback(() => {
+  const sendMessage = () => {
     if (!input.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
     wsRef.current.send(input.trim());
     setInput('');
-  }, [input]);
+  };
 
   const renderMessage = (msg: Message, i: number) => {
     const isMe = msg.nickname === nickname;
@@ -179,6 +177,7 @@ export default function Chat() {
       <div className="flex flex-1 overflow-hidden">
         {/* 채팅 영역 */}
         <div className="flex-1 flex flex-col min-w-0">
+          {/* 메시지 목록 */}
           <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
             {messages.length === 0 && (
               <div className="flex-1 flex items-center justify-center">
@@ -189,6 +188,7 @@ export default function Chat() {
             <div ref={bottomRef} />
           </div>
 
+          {/* 입력창 */}
           <div className="bg-card border-t border-border px-4 py-3 flex gap-2 shrink-0">
             <input
               className="flex-1 border border-border rounded-full px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors bg-background"

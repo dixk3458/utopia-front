@@ -1,7 +1,11 @@
 import { createBrowserRouter, redirect } from 'react-router';
-import App from './App';
-import AppShell from './AppShell';
 
+// 레이아웃 컴포넌트
+import App from './App'; // 풀스크린 (Navbar/Footer/Sidebar 없음)
+import AppShell from './AppShell'; // Sidebar + Header 포함 레이아웃
+
+// 일반 페이지 및 성보님 작업 페이지
+import Home from './pages/Home';
 import Landing from './pages/landing/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -9,27 +13,40 @@ import SocialCallback from './pages/SocialCallback';
 import Favor from './pages/Favor';
 import HandOcrCaptcha from './pages/hand-ocr-captcha/HandOcrCaptcha';
 import Chat from './pages/Chat';
+import CaptchaDemo from './pages/CaptchaDemo';
 
+// 사이드바가 필요한 페이지
 import Profile from './pages/Profile';
 import Report from './pages/Report';
 import Party from './pages/Party';
-import Home from './pages/Home';
 
+// 마이페이지 관련
 import Me from './pages/mypage/Me';
 import MyParty from './pages/mypage/MyParty';
 import MyHistory from './pages/mypage/MyHistory';
 import MyReport from './pages/mypage/MyReport';
 import MyPayment from './pages/mypage/MyPayment';
 
+// 관리자 페이지 (팀원 추가분)
+import AdminShell from './pages/admin/AdminShell';
+import AdminReports from './pages/admin/AdminReports';
+import AdminReceipts from './pages/admin/AdminReceipts';
+import AdminSettlements from './pages/admin/AdminSettlements';
+import AdminSystemLogs from './pages/admin/AdminSystemLogs';
+
 const router = createBrowserRouter([
-  // ── 1. 풀스크린 레이아웃 그룹 (Header + Footer, Sidebar 없음) ──
+  // ── 1. 풀스크린 레이아웃 그룹 (App.tsx 사용) ───────────────────
   {
     path: '/',
     Component: App,
     children: [
       {
         index: true,
-        Component: Landing,
+        Component: Landing, // 팀원의 랜딩 페이지를 인덱스로 설정
+      },
+      {
+        path: 'home', // 성보님의 Home 페이지
+        Component: Home,
       },
       {
         path: 'login',
@@ -55,19 +72,18 @@ const router = createBrowserRouter([
         path: 'party/:partyId/chat',
         Component: Chat,
       },
+      {
+        path: 'captcha-demo',
+        Component: CaptchaDemo,
+      },
     ],
   },
 
-  // ── 2. 사이드바 + 헤더 레이아웃 그룹 (AppShell) ──
+  // ── 2. 사이드바 + 헤더 레이아웃 그룹 (AppShell.tsx 사용) ──────
   {
     path: '/',
     Component: AppShell,
     children: [
-      {
-        // ✅ Fix: Home을 AppShell 레이아웃으로 이동 (내부에서 Sidebar/Header 직접 렌더링하지 않음)
-        path: 'home',
-        Component: Home,
-      },
       {
         path: 'profile/:userId',
         Component: Profile,
@@ -109,6 +125,34 @@ const router = createBrowserRouter([
             Component: MyPayment,
           },
         ],
+      },
+    ],
+  },
+
+  // ── 3. 관리자 레이아웃 그룹 (AdminShell 사용) ──────────────
+  {
+    path: '/admin',
+    Component: AdminShell,
+    children: [
+      {
+        index: true,
+        loader: () => redirect('/admin/reports'),
+      },
+      {
+        path: 'reports',
+        Component: AdminReports,
+      },
+      {
+        path: 'receipts',
+        Component: AdminReceipts,
+      },
+      {
+        path: 'settlements',
+        Component: AdminSettlements,
+      },
+      {
+        path: 'logs',
+        Component: AdminSystemLogs,
       },
     ],
   },
