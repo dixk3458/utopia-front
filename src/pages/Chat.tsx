@@ -4,7 +4,7 @@ import { api } from '../libs/api';
 
 interface Message {
   type: 'message' | 'system' | 'warning' | 'error';
-  room_id?: string;
+  party_id?: string;
   user_id?: string;
   nickname?: string;
   content: string;
@@ -12,14 +12,14 @@ interface Message {
 }
 
 interface Member {
-  user_id: string;   // ✅ Fix: number → string (UUID)
+  user_id: string;
   nickname: string;
   role: string;
-  payment_status: number;
+  status: string;
 }
 
-interface RoomInfo {
-  party_id: string;  // ✅ Fix: number → string (UUID)
+interface PartyInfo {
+  party_id: string;
   title: string;
   members: Member[];
 }
@@ -36,9 +36,7 @@ export default function Chat() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  // ✅ Fix: roomId 타입을 string으로 변경 (UUID)
-  const [roomId, setRoomId] = useState<string | null>(null);
-  const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
+  const [partyInfo, setPartyInfo] = useState<PartyInfo | null>(null);
   const [connected, setConnected] = useState(false);
   const [nickname] = useState(() => localStorage.getItem('nickname') ?? '익명');
   const [userId] = useState(() => localStorage.getItem('user_id') ?? 'guest');
@@ -47,35 +45,33 @@ export default function Chat() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const connectedRef = useRef(false);
 
-  // 채팅방 생성/조회
   useEffect(() => {
     if (!partyId) return;
-    api.post(`/chat/rooms/${partyId}`)
-      // ✅ Fix: chat_room_id가 이제 UUID 문자열
-      .then(({ data }) => setRoomId(data.chat_room_id))
-      .catch(() => navigate('/'));
 
-    api.get(`/chat/rooms/${partyId}/info`)
-      .then(({ data }) => setRoomInfo(data))
+    // ✅ Fix: chat_rooms 없으므로 party_id로 직접 메시지/멤버 조회
+    api.get(`/chat/parties/${partyId}/messages`)
+      .then(({ data }) => setMessages(data))
       .catch(() => {});
-  }, [partyId, navigate]);
+
+    api.get(`/chat/parties/${partyId}/info`)
+      .then(({ data }) => setPartyInfo(data))
+      .catch(() => {});
+  }, [partyId]);
 
   // WebSocket 연결
   useEffect(() => {
-    if (!roomId) return;
+    if (!partyId) return;
     if (connectedRef.current) return;
     connectedRef.current = true;
-
-    api.get(`/chat/rooms/${roomId}/messages`)
-      .then(({ data }) => setMessages(data));
 
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
     }
 
+    // ✅ Fix: /ws/{party_id} 로 직접 연결
     const ws = new WebSocket(
-      `${WS_BASE}/api/chat/ws/${roomId}?nickname=${encodeURIComponent(nickname)}&user_id=${encodeURIComponent(userId)}`
+      `${WS_BASE}/api/chat/ws/${partyId}?nickname=${encodeURIComponent(nickname)}&user_id=${encodeURIComponent(userId)}`
     );
     wsRef.current = ws;
 
@@ -94,9 +90,8 @@ export default function Chat() {
       wsRef.current = null;
       connectedRef.current = false;
     };
-  }, [roomId, nickname, userId]);
+  }, [partyId, nickname, userId]);
 
-  // 스크롤 하단
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -153,27 +148,25 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* 헤더 */}
       <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3 shrink-0">
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/home')}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           ← 파티 목록
         </button>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-foreground truncate">
-            {roomInfo?.title ?? '채팅방'}
+            {partyInfo?.title ?? '채팅방'}
           </p>
           <p className="text-xs text-muted-foreground">
             {connected ? '🟢 연결됨' : '🔴 연결 중...'}
-            {roomInfo && ` · 멤버 ${roomInfo.members.length}명`}
+            {partyInfo && ` · 멤버 ${partyInfo.members.length}명`}
           </p>
         </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* 채팅 영역 */}
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
             {messages.length === 0 && (
@@ -203,14 +196,12 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* 파티 멤버 사이드바 */}
         <div className="w-56 shrink-0 border-l border-border bg-card flex flex-col">
           <div className="px-4 py-3 border-b border-border">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">파티 멤버</p>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {roomInfo?.members.map(member => (
-              // ✅ Fix: key를 UUID 문자열로
+            {partyInfo?.members.map(member => (
               <div key={member.user_id} className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
                   {member.nickname[0]}
@@ -219,12 +210,9 @@ export default function Chat() {
                   <p className="text-sm font-medium text-foreground truncate">{member.nickname}</p>
                   <p className="text-xs text-muted-foreground">{member.role}</p>
                 </div>
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${member.payment_status === 1 ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                  {member.payment_status === 1 ? '납부' : '미납'}
-                </span>
               </div>
             ))}
-            {(!roomInfo || roomInfo.members.length === 0) && (
+            {(!partyInfo || partyInfo.members.length === 0) && (
               <p className="text-xs text-muted-foreground px-4 py-3">멤버 정보 없음</p>
             )}
           </div>
