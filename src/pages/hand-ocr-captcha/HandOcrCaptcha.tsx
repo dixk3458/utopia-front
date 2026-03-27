@@ -125,6 +125,7 @@ export default function HandOcrCaptcha({ onSuccess }: HandOcrCaptchaProps) {
 
       if (data.success) {
         // 🌟 성공 시 passToken을 안전하게 저장
+        console.log('기존 토큰:', passToken);
         setPassToken(data.passToken);
         setStep('success');
 
