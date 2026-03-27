@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { api } from '../libs/api';
 
 interface Message {
   type: 'message' | 'system' | 'warning' | 'error';
-  room_id?: number;
+  room_id?: string;
   user_id?: string;
   nickname?: string;
   content: string;
@@ -12,14 +12,14 @@ interface Message {
 }
 
 interface Member {
-  user_id: number;
+  user_id: string;   // ✅ Fix: number → string (UUID)
   nickname: string;
   role: string;
   payment_status: number;
 }
 
 interface RoomInfo {
-  party_id: number;
+  party_id: string;  // ✅ Fix: number → string (UUID)
   title: string;
   members: Member[];
 }
@@ -36,7 +36,8 @@ export default function Chat() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [roomId, setRoomId] = useState<number | null>(null);
+  // ✅ Fix: roomId 타입을 string으로 변경 (UUID)
+  const [roomId, setRoomId] = useState<string | null>(null);
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
   const [connected, setConnected] = useState(false);
   const [nickname] = useState(() => localStorage.getItem('nickname') ?? '익명');
@@ -44,31 +45,30 @@ export default function Chat() {
 
   const wsRef = useRef<WebSocket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const connectedRef = useRef(false); // 중복 연결 방지
+  const connectedRef = useRef(false);
 
   // 채팅방 생성/조회
   useEffect(() => {
     if (!partyId) return;
     api.post(`/chat/rooms/${partyId}`)
+      // ✅ Fix: chat_room_id가 이제 UUID 문자열
       .then(({ data }) => setRoomId(data.chat_room_id))
       .catch(() => navigate('/'));
 
     api.get(`/chat/rooms/${partyId}/info`)
       .then(({ data }) => setRoomInfo(data))
       .catch(() => {});
-  }, [partyId]);
+  }, [partyId, navigate]);
 
   // WebSocket 연결
   useEffect(() => {
     if (!roomId) return;
-    if (connectedRef.current) return; // 이미 연결됐으면 스킵
+    if (connectedRef.current) return;
     connectedRef.current = true;
 
-    // 이전 메시지 로드
     api.get(`/chat/rooms/${roomId}/messages`)
       .then(({ data }) => setMessages(data));
 
-    // 기존 연결 정리
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
@@ -94,18 +94,18 @@ export default function Chat() {
       wsRef.current = null;
       connectedRef.current = false;
     };
-  }, [roomId]);
+  }, [roomId, nickname, userId]);
 
   // 스크롤 하단
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = () => {
+  const sendMessage = useCallback(() => {
     if (!input.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
     wsRef.current.send(input.trim());
     setInput('');
-  };
+  }, [input]);
 
   const renderMessage = (msg: Message, i: number) => {
     const isMe = msg.nickname === nickname;
@@ -119,7 +119,6 @@ export default function Chat() {
         </div>
       );
     }
-
     if (msg.type === 'warning') {
       return (
         <div key={i} className="flex justify-center">
@@ -129,7 +128,6 @@ export default function Chat() {
         </div>
       );
     }
-
     if (msg.type === 'error') {
       return (
         <div key={i} className="flex justify-center">
@@ -177,7 +175,6 @@ export default function Chat() {
       <div className="flex flex-1 overflow-hidden">
         {/* 채팅 영역 */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* 메시지 목록 */}
           <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
             {messages.length === 0 && (
               <div className="flex-1 flex items-center justify-center">
@@ -188,7 +185,6 @@ export default function Chat() {
             <div ref={bottomRef} />
           </div>
 
-          {/* 입력창 */}
           <div className="bg-card border-t border-border px-4 py-3 flex gap-2 shrink-0">
             <input
               className="flex-1 border border-border rounded-full px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors bg-background"
@@ -214,6 +210,7 @@ export default function Chat() {
           </div>
           <div className="flex-1 overflow-y-auto">
             {roomInfo?.members.map(member => (
+              // ✅ Fix: key를 UUID 문자열로
               <div key={member.user_id} className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
                   {member.nickname[0]}
