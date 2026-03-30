@@ -38,17 +38,28 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const [partyInfo, setPartyInfo] = useState<PartyInfo | null>(null);
   const [connected, setConnected] = useState(false);
-  const [nickname] = useState(() => localStorage.getItem('nickname') ?? '익명');
-  const [userId] = useState(() => localStorage.getItem('user_id') ?? 'guest');
+  const [nickname, setNickname] = useState('익명');
+  const [userId, setUserId] = useState('guest');
+  const [userReady, setUserReady] = useState(false); // ← 유저 정보 로드 완료 여부
 
   const wsRef = useRef<WebSocket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const connectedRef = useRef(false);
 
+  // 유저 정보 먼저 가져오기
+  useEffect(() => {
+    api.get('/me').then(({ data }) => {
+      setNickname(data.nickname);
+      setUserId(data.id);
+      setUserReady(true);
+    }).catch(() => {
+      setUserReady(true); // 실패해도 익명으로 진행
+    });
+  }, []);
+
   useEffect(() => {
     if (!partyId) return;
 
-    // ✅ Fix: chat_rooms 없으므로 party_id로 직접 메시지/멤버 조회
     api.get(`/chat/parties/${partyId}/messages`)
       .then(({ data }) => setMessages(data))
       .catch(() => {});
@@ -58,9 +69,9 @@ export default function Chat() {
       .catch(() => {});
   }, [partyId]);
 
-  // WebSocket 연결
+  // WebSocket 연결 - 유저 정보 로드 후 연결
   useEffect(() => {
-    if (!partyId) return;
+    if (!partyId || !userReady) return; // ← userReady 체크
     if (connectedRef.current) return;
     connectedRef.current = true;
 
@@ -69,7 +80,6 @@ export default function Chat() {
       wsRef.current = null;
     }
 
-    // ✅ Fix: /ws/{party_id} 로 직접 연결
     const ws = new WebSocket(
       `${WS_BASE}/api/chat/ws/${partyId}?nickname=${encodeURIComponent(nickname)}&user_id=${encodeURIComponent(userId)}`
     );
@@ -90,7 +100,7 @@ export default function Chat() {
       wsRef.current = null;
       connectedRef.current = false;
     };
-  }, [partyId, nickname, userId]);
+  }, [partyId, userReady, nickname, userId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
