@@ -1,9 +1,8 @@
-import { Link, useNavigate, useLocation } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useAuthStore } from '../stores/authStore';
 
 export default function Header() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const { isLoggedIn, loading, logout } = useAuthStore();
 
