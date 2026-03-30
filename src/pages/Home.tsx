@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Party, SystemNotification } from '../types/party';
 import {
   fetchParties,
@@ -12,30 +11,6 @@ import {
   notificationKeys,
   categoryKeys,
 } from '../libs/partyapi';
-import Header from '../components/Header';
-import Sidebar from '../components/Sidebar';
-
-const MOCK_PARTIES: Party[] = [
-  {
-    party_id: 1, host_id: 1, platform_id: 1, title: 'Netflix 프리미엄 파티 모집',
-    status: 'RECRUITING', host_nickname: '홍길동', platform_name: 'Netflix',
-    category_name: 'OTT', member_count: 2,
-  },
-  {
-    party_id: 2, host_id: 2, platform_id: 8, title: '쿠팡 로켓와우 함께 쓸 분',
-    status: 'RECRUITING', host_nickname: '김철수', platform_name: '쿠팡 로켓와우',
-    category_name: '멤버십/음악', member_count: 1,
-  },
-];
-
-const MOCK_NOTICE: SystemNotification = {
-  notification_id: 1,
-  user_id: null,
-  type: 'SYSTEM',
-  content: '이번 달부터 파티 참여 이력에 따른 신뢰도 점수가 반영됩니다.',
-  is_read: false,
-  created_at: '2026-03-12',
-};
 
 const STATUS_LABEL: Record<string, string> = {
   RECRUITING: '모집중',
@@ -45,28 +20,30 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const CATEGORY_COLOR: Record<string, string> = {
-  'OTT': 'bg-blue-100 text-blue-700',
+  OTT: 'bg-blue-100 text-blue-700',
   '멤버십/음악': 'bg-green-100 text-green-700',
   '교육/도서': 'bg-purple-100 text-purple-700',
-  '생산성': 'bg-pink-100 text-pink-700',
-  '기타': 'bg-slate-100 text-slate-600',
+  생산성: 'bg-pink-100 text-pink-700',
+  기타: 'bg-slate-100 text-slate-600',
 };
 
 // ── SearchBar ─────────────────────────────────────────────────────────────
 function SearchBar({ onSearch }: { onSearch: (q: string) => void }) {
   const [value, setValue] = useState('');
+  const handleSearch = () => onSearch(value);
+
   return (
     <div className="max-w-xl mx-auto">
-      <div className="flex items-center gap-3 bg-white rounded-full px-5 py-3 shadow-lg">
+      <div className="flex items-center gap-3 bg-white rounded-full px-5 py-3 shadow-lg focus-within:ring-2 focus-within:ring-white/50">
         <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
-          className="flex-1 outline-none text-sm text-foreground bg-transparent placeholder:text-slate-400"
+          className="flex-1 outline-none text-sm text-slate-900 bg-transparent placeholder:text-slate-400"
           placeholder="찾고 있는 서비스나 상품을 검색하세요"
           value={value}
           onChange={e => setValue(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && onSearch(value)}
+          onKeyDown={e => e.key === 'Enter' && handleSearch()}
         />
         {value && (
           <button className="text-slate-400 text-sm hover:text-slate-600" onClick={() => { setValue(''); onSearch(''); }}>✕</button>
@@ -85,40 +62,45 @@ function PartyCard({ party, onApply }: { party: Party; onApply: (p: Party) => vo
     <div className="bg-card rounded-2xl p-5 shadow-sm border border-border flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all">
       <div className="flex items-center justify-between">
         <div className="flex gap-1.5 flex-wrap">
-          {party.status && (
-            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${party.status === 'RECRUITING' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-              {STATUS_LABEL[party.status]}
-            </span>
-          )}
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${party.status === 'RECRUITING' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+            {STATUS_LABEL[party.status ?? ''] || '모집중'}
+          </span>
           {party.category_name && (
             <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${CATEGORY_COLOR[party.category_name] ?? 'bg-slate-100 text-slate-600'}`}>
               {party.category_name}
             </span>
           )}
         </div>
-        <span className="text-xs text-muted-foreground font-medium">{party.platform_name}</span>
+        {/* ✅ Fix: platform_name → service_name */}
+        <span className="text-xs text-muted-foreground font-medium">{party.service_name}</span>
       </div>
 
-      <h3 className="text-sm font-bold text-foreground leading-snug">{party.title}</h3>
+      <h3 className="text-sm font-bold text-foreground leading-snug h-10 line-clamp-2">{party.title}</h3>
 
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-        <span>👥 {party.member_count}명 참여중</span>
-        <span>👤 {party.host_nickname}</span>
+        {/* ✅ Fix: max_members 표시 추가 */}
+        <span>👥 {party.member_count}/{party.max_members ?? '?'}명</span>
+        <span>👤 {party.host_nickname || '익명'}</span>
+        {/* ✅ Fix: monthly_price 표시 추가 */}
+        {party.monthly_price != null && party.monthly_price > 0 && (
+          <span>💰 월 {party.monthly_price.toLocaleString()}원</span>
+        )}
       </div>
 
       <div className="flex gap-2 mt-1">
+        {/* ✅ Fix: party_id → id */}
         <button
-          onClick={() => navigate(`/party/${party.party_id}/chat`)}
-          className="flex-1 py-2 text-xs font-semibold border border-border rounded-lg text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+          onClick={() => navigate(`/party/${party.id}/chat`)}
+          className="flex-1 py-2 text-xs font-semibold border border-border rounded-lg hover:bg-accent transition-colors"
         >
           채팅방 입장
         </button>
         <button
           disabled={isFull}
-          onClick={() => !isFull && onApply(party)}
+          onClick={() => onApply(party)}
           className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${isFull ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:opacity-90'}`}
         >
-          {isFull ? STATUS_LABEL[party.status ?? 'FULL'] : '참여 신청'}
+          {isFull ? (STATUS_LABEL[party.status ?? ''] || '마감') : '참여 신청'}
         </button>
       </div>
     </div>
@@ -127,45 +109,51 @@ function PartyCard({ party, onApply }: { party: Party; onApply: (p: Party) => vo
 
 // ── ApplyModal ────────────────────────────────────────────────────────────
 function ApplyModal({ party, onClose }: { party: Party; onClose: () => void }) {
+  const queryClient = useQueryClient();
   const [done, setDone] = useState(false);
-  const [errMsg, setErrMsg] = useState('');
 
   const mutation = useMutation({
-    mutationFn: () => applyParty(party.party_id),
-    onSuccess: () => setDone(true),
-    onError: (e: Error) => setErrMsg(e.message),
+    // ✅ Fix: party_id → id
+    mutationFn: () => applyParty(party.id),
+    onSuccess: () => {
+      setDone(true);
+      queryClient.invalidateQueries({ queryKey: partyKeys.all });
+    },
+    onError: (e: Error) => alert(e.message),
   });
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-card rounded-2xl p-8 w-full max-w-sm mx-4 shadow-xl flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-card rounded-2xl p-8 w-full max-w-sm shadow-xl flex flex-col gap-4" onClick={e => e.stopPropagation()}>
         {done ? (
-          <>
-            <div className="text-center text-4xl">🎉</div>
-            <h3 className="text-center font-bold text-foreground">신청 완료!</h3>
-            <p className="text-center text-sm text-muted-foreground">파티 참여 신청이 완료되었습니다.</p>
+          <div className="text-center py-4">
+            <div className="text-4xl mb-4">🎉</div>
+            <h3 className="font-bold text-foreground mb-1">신청 완료!</h3>
+            <p className="text-sm text-muted-foreground mb-6">파티 참여 신청이 완료되었습니다.</p>
             <button onClick={onClose} className="w-full py-3 bg-primary text-primary-foreground rounded-xl text-sm font-bold">확인</button>
-          </>
+          </div>
         ) : (
           <>
-            <h3 className="font-extrabold text-lg text-foreground">파티 참여 신청</h3>
+            <h3 className="font-extrabold text-lg">파티 참여 신청</h3>
             <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">{party.title}</span> 파티에 참여하시겠습니까?
+              {/* ✅ Fix: platform_name → service_name */}
+              <span className="font-semibold text-foreground">[{party.service_name}] {party.title}</span><br />파티에 참여하시겠습니까?
             </p>
             <div className="flex flex-col gap-1.5 text-xs text-muted-foreground bg-muted rounded-xl p-3">
-              <span>🎮 {party.platform_name}</span>
-              <span>👥 {party.member_count}명 참여중</span>
+              <span>👥 현재 {party.member_count}/{party.max_members ?? '?'}명 참여 중</span>
               <span>👤 호스트: {party.host_nickname}</span>
+              {party.monthly_price != null && party.monthly_price > 0 && (
+                <span>💰 월 {party.monthly_price.toLocaleString()}원</span>
+              )}
             </div>
-            {errMsg && <p className="text-xs text-destructive">{errMsg}</p>}
-            <div className="flex gap-2 mt-1">
-              <button onClick={onClose} className="flex-1 py-3 border border-border rounded-xl text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors">취소</button>
+            <div className="flex gap-2 mt-2">
+              <button onClick={onClose} className="flex-1 py-3 border border-border rounded-xl text-sm font-semibold hover:bg-muted transition-colors">취소</button>
               <button
                 onClick={() => mutation.mutate()}
                 disabled={mutation.isPending}
-                className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 transition-opacity"
+                className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-bold disabled:opacity-50"
               >
-                {mutation.isPending ? '신청 중...' : '신청하기'}
+                {mutation.isPending ? '처리 중...' : '신청하기'}
               </button>
             </div>
           </>
@@ -178,110 +166,128 @@ function ApplyModal({ party, onClose }: { party: Party; onClose: () => void }) {
 // ── Home ──────────────────────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate();
-  const [categoryId, setCategoryId] = useState<number | null>(null);
+  // ✅ Fix: categoryId(UUID) → category(문자열) 로 상태명 변경
+  const [category, setCategory] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [applyTarget, setApplyTarget] = useState<Party | null>(null);
   const [noticeDismissed, setNoticeDismissed] = useState(false);
 
-  const { data: categories } = useQuery({
+  // 1. 카테고리 목록
+  const { data: categoriesRaw } = useQuery({
     queryKey: categoryKeys.all,
     queryFn: fetchCategories,
   });
+  const categories = Array.isArray(categoriesRaw) ? categoriesRaw : [];
 
+  // 2. 파티 목록
+  // ✅ Fix: category_id → category 파라미터로 변경
   const { data: partyData, isLoading } = useQuery({
-    queryKey: partyKeys.list(categoryId, search),
-    queryFn: () => fetchParties({ category_id: categoryId ?? undefined, search }),
+    queryKey: partyKeys.list(category, search),
+    queryFn: () => fetchParties({ category: category ?? undefined, search }),
   });
+  const parties = (partyData && Array.isArray(partyData.parties)) ? partyData.parties : [];
 
-  const { data: notices } = useQuery({
+  // 3. 알림
+  const { data: noticesRaw } = useQuery<SystemNotification[]>({
     queryKey: notificationKeys.latest,
     queryFn: fetchLatestNotifications,
+    enabled: !noticeDismissed,
   });
-
-  const notice = !noticeDismissed && Array.isArray(notices) && notices.length > 0 ? notices[0] : null;
-  
-  // 핵심 수정: API 응답이 배열이 아닐 경우 빈 배열로 처리하여 .map 에러 방지
-  const parties = Array.isArray(partyData?.parties) ? partyData.parties : [];
+  const notices = Array.isArray(noticesRaw) ? noticesRaw : [];
+  const activeNotice = !noticeDismissed && notices.length > 0 ? notices[0] : null;
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header />
-        <main className="flex-1 overflow-y-auto">
-          <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-primary to-blue-400 px-6 py-14 text-center">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_50%,rgba(255,255,255,0.12),transparent_60%)]" />
-            <h1 className="relative text-3xl font-black text-white tracking-tight mb-2">함께하면 더 저렴하게</h1>
-            <p className="relative text-sm text-white/80 mb-7">구독 서비스부터 공동구매까지, 파티업에서 파티원을 찾아보세요</p>
-            <SearchBar onSearch={setSearch} />
-          </section>
+    <>
+      <section className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-primary to-blue-500 px-6 py-16 text-center">
+        <h1 className="relative text-3xl font-black text-white mb-2">함께하면 더 저렴하게</h1>
+        <p className="relative text-sm text-white/80 mb-8">구독 서비스부터 공동구매까지, 파티업에서 파티원을 찾아보세요</p>
+        <SearchBar onSearch={setSearch} />
+      </section>
 
-          <div className="max-w-6xl mx-auto px-6">
-            {notice && (
-              <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3.5 mt-5">
-                <span className="text-lg shrink-0">📢</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-blue-800">{notice.type}</p>
-                  <p className="text-xs text-blue-600 mt-0.5">{notice.content}</p>
-                </div>
-                <button onClick={() => setNoticeDismissed(true)} className="text-blue-400 hover:text-blue-600 text-sm shrink-0">✕</button>
+      <div className="max-w-6xl mx-auto px-6">
+        {activeNotice && (
+          <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3.5 mt-6">
+            <span className="text-lg shrink-0">📢</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-blue-800">{activeNotice.type}</p>
+              <p className="text-xs text-blue-600 mt-0.5">{activeNotice.content}</p>
+            </div>
+            <button onClick={() => setNoticeDismissed(true)} className="text-blue-400 hover:text-blue-600">✕</button>
+          </div>
+        )}
+
+        <div className="flex flex-col md:flex-row gap-8 py-8">
+          {/* 사이드바: 카테고리 필터 */}
+          <aside className="w-full md:w-52 shrink-0 flex flex-col gap-4">
+            <div className="bg-card border border-border rounded-2xl p-4 sticky top-4">
+              <p className="text-[10px] font-bold text-muted-foreground mb-3 uppercase tracking-widest">CATEGORIES</p>
+              <nav className="flex flex-col gap-1">
+                <button
+                  onClick={() => setCategory(null)}
+                  className={`text-left px-3 py-2 rounded-xl text-sm transition-all ${category === null ? 'bg-primary/10 text-primary font-bold' : 'text-muted-foreground hover:bg-muted'}`}
+                >
+                  전체 파티
+                </button>
+                {/* ✅ Fix: cat.category_id가 이제 카테고리 이름 문자열 */}
+                {categories.map(cat => (
+                  <button
+                    key={cat.category_id}
+                    onClick={() => setCategory(cat.category_id)}
+                    className={`text-left px-3 py-2 rounded-xl text-sm transition-all ${category === cat.category_id ? 'bg-primary/10 text-primary font-bold' : 'text-muted-foreground hover:bg-muted'}`}
+                  >
+                    {cat.category_name}
+                  </button>
+                ))}
+              </nav>
+            </div>
+            <button
+              onClick={() => navigate('/party/create')}
+              className="w-full py-3.5 bg-primary text-primary-foreground rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+            >
+              + 파티 생성하기
+            </button>
+          </aside>
+
+          {/* 파티 목록 */}
+          <section className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold">
+                {search ? `'${search}' 검색 결과` : category ? `${category} 파티` : '실시간 파티 목록'}
+              </h2>
+              <span className="text-xs font-medium px-2 py-1 bg-muted rounded-md">
+                총 {partyData?.total ?? 0}개
+              </span>
+            </div>
+
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="h-48 bg-muted animate-pulse rounded-2xl" />
+                ))}
+              </div>
+            ) : parties.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 bg-muted/30 rounded-3xl border border-dashed">
+                <span className="text-4xl mb-4">🔎</span>
+                <p className="text-muted-foreground text-sm">진행 중인 파티가 없네요. 직접 만들어보세요!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {parties.map(party => (
+                  // ✅ Fix: party_id → id
+                  <PartyCard key={party.id} party={party} onApply={setApplyTarget} />
+                ))}
               </div>
             )}
-
-            <div className="flex gap-6 py-6">
-              <aside className="w-52 shrink-0 flex flex-col gap-4">
-                <div className="bg-card border border-border rounded-2xl p-4">
-                  <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wide">카테고리</p>
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      onClick={() => setCategoryId(null)}
-                      className={`text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors ${categoryId === null ? 'bg-blue-50 text-primary font-bold' : 'text-muted-foreground hover:bg-muted'}`}
-                    >
-                      전체 파티
-                    </button>
-                    {/* 카테고리 map 안전 처리 */}
-                    {Array.isArray(categories) && categories.map(cat => (
-                      <button
-                        key={cat.category_id}
-                        onClick={() => setCategoryId(cat.category_id)}
-                        className={`text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors ${categoryId === cat.category_id ? 'bg-blue-50 text-primary font-bold' : 'text-muted-foreground hover:bg-muted'}`}
-                      >
-                        {cat.category_name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <button
-                  onClick={() => navigate('/party/create')}
-                  className="w-full py-3 bg-primary text-primary-foreground rounded-2xl text-sm font-bold shadow-md shadow-primary/30 hover:opacity-90 transition-opacity"
-                >
-                  + 파티생성
-                </button>
-              </aside>
-
-              <section className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-4">
-                  <h2 className="text-base font-extrabold text-foreground">전체 파티</h2>
-                  <span className="text-xs text-muted-foreground">{partyData?.total ?? 0}개</span>
-                </div>
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-20 text-muted-foreground text-sm">불러오는 중...</div>
-                ) : parties.length === 0 ? (
-                  <div className="flex items-center justify-center py-20 text-muted-foreground text-sm">검색 결과가 없습니다.</div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* parties가 확실히 배열일 때만 렌더링 */}
-                    {parties.map(party => (
-                      <PartyCard key={party.party_id} party={party} onApply={setApplyTarget} />
-                    ))}
-                  </div>
-                )}
-              </section>
-            </div>
-          </div>
-        </main>
+          </section>
+        </div>
       </div>
-      {applyTarget && <ApplyModal party={applyTarget} onClose={() => setApplyTarget(null)} />}
-    </div>
+
+      {applyTarget && (
+        <ApplyModal
+          party={applyTarget}
+          onClose={() => setApplyTarget(null)}
+        />
+      )}
+    </>
   );
 }

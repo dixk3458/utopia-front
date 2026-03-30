@@ -7,4 +7,5 @@ export interface StartCaptchaResponse {
 export interface VerifyCaptchaResponse {
   success: boolean;
   message: string;
+  passToken?: string;
 }

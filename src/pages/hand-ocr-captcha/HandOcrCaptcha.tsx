@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState, useRef } from 'react';
 import Container from '../../components/layout/Container';
 import {
@@ -29,6 +30,10 @@ interface ChallengeData {
   pose: string;
 }
 
+interface HandOcrCaptchaProps {
+  onSuccess?: (token: string) => void;
+}
+
 const TOTAL_SECONDS = 5 * 60; // 300초
 
 const EXAMPLES = [
@@ -39,7 +44,7 @@ const EXAMPLES = [
   { id: 5, image: example5, pose: '손가락 3개 🤚' },
 ];
 
-export default function HandOcrCaptcha() {
+export default function HandOcrCaptcha({ onSuccess }: HandOcrCaptchaProps) {
   const [step, setStep] = useState<Step>('intro');
   const [timeLeft, setTimeLeft] = useState(TOTAL_SECONDS);
 
@@ -52,6 +57,9 @@ export default function HandOcrCaptcha() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [currentExampleIdx, setCurrentExampleIdx] = useState(0);
+
+  // 🌟 Type Error 해결: null 대신 undefined를 기본값으로 사용
+  const [passToken, setPassToken] = useState<string | undefined>(undefined);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -116,7 +124,18 @@ export default function HandOcrCaptcha() {
       const data = await verifyCaptcha(sessionId, selectedFile);
 
       if (data.success) {
+        // 🌟 성공 시 passToken을 안전하게 저장
+        console.log('기존 토큰:', passToken);
+        setPassToken(data.passToken);
         setStep('success');
+
+        // 🌟 올바른 로그 출력 방식
+        console.log('새로 발급된 토큰:', data.passToken);
+
+        // 🌟 부모 컴포넌트가 전달한 onSuccess 콜백 호출
+        if (onSuccess && data.passToken) {
+          onSuccess(data.passToken);
+        }
       } else {
         // 서버에서 실패 메시지를 주면 alert나 상태로 띄워줄 수 있습니다.
         alert(data.message || '인증에 실패했습니다.');
