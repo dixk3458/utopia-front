@@ -27,11 +27,14 @@ import MyPayment from './pages/mypage/MyPayment';
 
 // 관리자 페이지 (팀원 추가분)
 import AdminShell from './pages/admin/AdminShell';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminRoles from './pages/admin/AdminRoles';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminParties from './pages/admin/AdminParties';
 import AdminReports from './pages/admin/AdminReports';
 import AdminReceipts from './pages/admin/AdminReceipts';
 import AdminSettlements from './pages/admin/AdminSettlements';
 import AdminSystemLogs from './pages/admin/AdminSystemLogs';
-
 
 const router = createBrowserRouter([
   // ── 1. 풀스크린 레이아웃 그룹 (App.tsx 사용) ───────────────────
@@ -133,7 +136,19 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        loader: () => redirect('/admin/reports'),
+        Component: AdminDashboard,
+      },
+      {
+        path: 'roles',
+        Component: AdminRoles,
+      },
+      {
+        path: 'users',
+        Component: AdminUsers,
+      },
+      {
+        path: 'parties',
+        Component: AdminParties,
       },
       {
         path: 'reports',
