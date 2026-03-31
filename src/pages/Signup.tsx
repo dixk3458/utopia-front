@@ -37,7 +37,7 @@ export default function Signup() {
   const handleCheckEmail = async () => {
     if (!form.email) return alert('이메일을 입력해주세요.');
     try {
-      const response = await api.get('/users/check-email', {
+      const response = await api.get('/api/users/check-email', {
         params: { email: form.email },
       });
       if (response.data.exists) {
@@ -56,7 +56,9 @@ export default function Signup() {
   const handleEmailRequest = async () => {
     if (!isEmailChecked) return alert('먼저 이메일 중복 확인을 해주세요.');
     try {
-      await api.post('/email-request', null, { params: { email: form.email } });
+      await api.post('/api/email-request', null, {
+        params: { email: form.email },
+      });
       alert('인증 메일이 발송되었습니다. 메일함을 확인해주세요!');
     } catch (_error) {
       alert('인증 메일 발송에 실패했습니다.');
@@ -67,7 +69,7 @@ export default function Signup() {
   const handleEmailVerify = async () => {
     if (!form.email_code) return alert('인증번호를 입력해주세요.');
     try {
-      const response = await api.post('/email-verify', null, {
+      const response = await api.post('/api/email-verify', null, {
         params: { email: form.email, code: form.email_code },
       });
       if (response.data.success) {
@@ -85,7 +87,7 @@ export default function Signup() {
   const handleCheckNickname = async () => {
     if (!form.nickname) return alert('닉네임을 입력해주세요.');
     try {
-      const response = await api.get('/users/check-nickname', {
+      const response = await api.get('/api/users/check-nickname', {
         params: { nickname: form.nickname },
       });
       if (response.data.exists) {
@@ -113,7 +115,7 @@ export default function Signup() {
     }
 
     try {
-      const response = await api.post('/users', form, {
+      const response = await api.post('/api/users', form, {
         headers: { 'X-Captcha-Token': captchaToken },
       });
       if (response.status === 200 || response.status === 201) {
