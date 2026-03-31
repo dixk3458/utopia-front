@@ -40,9 +40,14 @@ export interface BehaviorPayload {
   timestamp: string;
 }
 
+type NavigatorWithWebdriver = Navigator & { webdriver?: boolean };
+
 // ── UUID 생성 (HTTP 환경 폴백 포함) ───────────────
 function generateUUID(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
     return crypto.randomUUID();
   }
   // HTTP 환경 폴백 (crypto.randomUUID는 HTTPS/localhost에서만 동작)
@@ -102,8 +107,14 @@ function getWebGLRenderer(): string {
 
 // ── 환경 정보 수집 ─────────────────────────────────
 function collectEnvInfo(): EnvInfo {
+  //도상원
+  const safeNavigator = navigator as NavigatorWithWebdriver;
+  //도상원
+
   return {
-    webdriver: !!(navigator as any).webdriver,
+    //도상원
+    webdriver: !!safeNavigator.webdriver,
+    //도상원
     plugins_count: navigator.plugins?.length ?? 0,
     canvas_hash: getCanvasHash(),
     webgl_renderer: getWebGLRenderer(),
@@ -117,7 +128,7 @@ function collectEnvInfo(): EnvInfo {
 const MAX_MOUSE_POINTS = 500; // CONTEXT.md: 최대 500포인트
 
 export function useBehaviorCollector() {
-  const sessionId = useRef(generateUUID()); // ← 수정된 부분
+  const sessionId = useRef(generateUUID());
   const pageLoadTime = useRef(Date.now());
 
   const mouseMoves = useRef<MouseMove[]>([]);
