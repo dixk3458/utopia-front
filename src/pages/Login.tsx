@@ -39,6 +39,13 @@ export default function Login() {
       return;
     }
 
+    //도상원
+    if (!captchaToken) {
+      alert('캡챠 인증을 완료해주세요.');
+      return;
+    }
+    //도상원
+
     try {
       setIsSubmitting(true);
 
@@ -49,7 +56,7 @@ export default function Login() {
           password: form.password,
         },
         {
-          headers: captchaToken ? { 'X-Captcha-Token': captchaToken } : {},
+          headers: { 'X-Captcha-Token': captchaToken },
         },
       );
 
@@ -58,11 +65,21 @@ export default function Login() {
 
       alert(response.data?.message || '로그인에 성공했습니다.');
       navigate('/home', { replace: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      //도상원
+      const apiError = error as {
+        response?: {
+          data?: {
+            detail?: string;
+            message?: string;
+          };
+        };
+      };
       const message =
-        error?.response?.data?.detail ||
-        error?.response?.data?.message ||
+        apiError.response?.data?.detail ||
+        apiError.response?.data?.message ||
         '로그인에 실패했습니다.';
+      //도상원
       alert(message);
     } finally {
       setIsSubmitting(false);
@@ -195,6 +212,9 @@ export default function Login() {
         <div className="flex justify-center py-1">
           <CaptchaWidget
             onSuccess={(token) => setCaptchaToken(token)}
+            //도상원
+            onError={() => setCaptchaToken(null)}
+            //도상원
             triggerType="new_ip_login"
           />
         </div>

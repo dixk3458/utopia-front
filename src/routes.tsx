@@ -14,7 +14,9 @@ import SocialSignup from './pages/SocialSignup';
 import Favor from './pages/Favor';
 import HandOcrCaptcha from './pages/hand-ocr-captcha/HandOcrCaptcha';
 import Chat from './pages/Chat';
-import CaptchaDemo from './pages/CaptchaDemo';
+//도상원
+// CaptchaDemo import 제거
+//도상원
 
 // ✅ 추가된 페이지
 import FindId from './pages/FindId';
@@ -98,10 +100,9 @@ const router = createBrowserRouter([
         path: 'party/:partyId/chat',
         Component: Chat,
       },
-      {
-        path: 'captcha-demo',
-        Component: CaptchaDemo,
-      },
+      //도상원
+      // captcha-demo 라우트 제거
+      //도상원
     ],
   },
 
