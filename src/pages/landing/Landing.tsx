@@ -8,24 +8,29 @@ import Navbar from '../../components/layout/Navbar';
 
 export default function Landing() {
   return (
-    <div>
+    <div className="bg-white">
       <Navbar />
+
       <Container className="py-4">
         <HeroSection />
       </Container>
+
       <div className="bg-gray-50/50 w-full">
         <Container className="py-4">
           <FeaturesSection />
         </Container>
       </div>
+
       <Container>
         <SecuritySection />
       </Container>
+
       <div className="bg-gray-50/50 w-full">
         <Container className="py-4">
           <TeamSection />
         </Container>
       </div>
+
       <Footer />
     </div>
   );

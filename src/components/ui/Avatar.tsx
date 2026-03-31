@@ -17,7 +17,7 @@ const SIZES: Record<SizeType, string> = {
 export default function Avatar({ src, alt, size = 'md' }: AvatarProps) {
   return (
     <div
-      className={`${SIZES[size]} rounded-full overflow-hidden mb-6 border-4 border-gray-50 shadow-inner`}
+      className={`${SIZES[size]} aspect-square shrink-0 rounded-full overflow-hidden mb-6 border-4 border-gray-50 shadow-inner bg-gray-100`}
     >
       <img src={src} alt={alt} className="w-full h-full object-cover" />
     </div>
