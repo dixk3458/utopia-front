@@ -43,7 +43,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   checkAuth: async () => {
     try {
-      const res = await api.get('/me');
+      const res = await api.get('/api/me');
 
       if (res.data?.is_logged_in && res.data.user) {
         set({
@@ -69,7 +69,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     try {
-      await api.post('/logout');
+      await api.post('/api/logout');
     } catch (e) {
       console.error(e);
     }

@@ -43,7 +43,7 @@ export default function Login() {
       setIsSubmitting(true);
 
       const response = await api.post(
-        '/login',
+        '/api/login',
         {
           email: form.email.trim(),
           password: form.password,
@@ -129,7 +129,7 @@ export default function Login() {
   };
 
   return (
-    <div className="mx-auto mt-10 max-w-xl rounded-xl border-2 border-gray-200 bg-white p-10 shadow-lg">
+    <div className="mx-auto mt-10 mb-12 max-w-xl rounded-xl border-2 border-gray-200 bg-white p-10 shadow-lg">
       <h1 className="mb-8 text-2xl font-bold text-gray-800">로그인</h1>
 
       <form className="space-y-6" onSubmit={handleSubmit}>
