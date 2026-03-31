@@ -1,9 +1,9 @@
 import { FiGithub, FiLinkedin, FiMail } from 'react-icons/fi';
 import Avatar from '../../../components/ui/Avatar';
-
 import image from '../../../assets/logo.png';
+import { useRef } from 'react';
+import useLandingAnimations from '../../../hooks/useLandingAnimations';
 
-// 팀원 데이터 타입 정의
 interface TeamMember {
   name: string;
   role: string;
@@ -16,48 +16,50 @@ interface TeamMember {
 }
 
 export default function TeamSection() {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  useLandingAnimations(sectionRef);
+
   const members: TeamMember[] = [
     {
       name: '김성보',
       role: 'Team Leader & AI Engineer',
       description: 'AI 보안 시스템 설계 및 GAN 기반 CAPTCHA 개발 담당',
-      image: image,
+      image,
       skills: ['Python', 'TensorFlow', 'PyTorch'],
     },
     {
       name: '박세영',
       role: 'Backend Developer',
       description: 'FastAPI 백엔드 아키텍처 설계 및 위험 점수 시스템 구현',
-      image: image,
+      image,
       skills: ['FastAPI', 'PostgreSQL', 'Redis'],
     },
     {
       name: '도상원',
       role: 'Frontend Developer',
       description: 'React 기반 UI/UX 구현 및 실시간 채팅 시스템 개발',
-      image: image,
+      image,
       skills: ['React', 'TypeScript', 'Tailwind'],
     },
     {
       name: '김영훈',
       role: 'ML Engineer',
       description: 'OCR, YOLO, MediaPipe 모델 학습 및 최적화 담당',
-      image: image,
+      image,
       skills: ['YOLO', 'OpenCV', 'MediaPipe'],
     },
     {
       name: '정재웅',
       role: 'Security Specialist',
       description: '보안 아키텍처 설계 및 침투 테스트, 취약점 분석',
-      image: image,
+      image,
       skills: ['Security', 'Penetration Test', 'JWT'],
     },
   ];
 
   return (
-    <section id="team" className="py-20 md:py-32 bg-white">
-      {/* 헤더 영역 */}
-      <div className="flex flex-col items-center text-center mb-16">
+    <section ref={sectionRef} id="team" className="py-20 md:py-32 bg-white">
+      <div className="section-header flex flex-col items-center text-center mb-16">
         <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-purple-50 text-purple-600 text-sm font-bold mb-6">
           개발팀 소개
         </div>
@@ -70,14 +72,12 @@ export default function TeamSection() {
         </p>
       </div>
 
-      {/* 카드 그리드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="stagger-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {members.map((member, index) => (
           <div
             key={index}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col items-center justify-between text-center p-8"
+            className="hover-lift h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col items-center justify-between text-center p-8 will-change-transform"
           >
-            {/* 프로필 이미지 */}
             <Avatar src={member.image} alt={member.name} size="lg" />
 
             <h3 className="text-xl font-bold text-gray-900 mb-1">
@@ -90,7 +90,6 @@ export default function TeamSection() {
               {member.description}
             </p>
 
-            {/* 기술 스택 뱃지 */}
             <div className="flex flex-wrap justify-center gap-2 mb-8">
               {member.skills.map((skill) => (
                 <span
@@ -102,7 +101,6 @@ export default function TeamSection() {
               ))}
             </div>
 
-            {/* 소셜 링크 */}
             <div className="flex items-center gap-4 pt-6 border-t border-gray-50 w-full justify-center">
               <button className={buttonClassName}>
                 <FiGithub size={18} />
@@ -117,8 +115,7 @@ export default function TeamSection() {
           </div>
         ))}
 
-        {/* 마지막 프로젝트 정보 카드 (특별 디자인) */}
-        <div className="bg-linear-to-br from-primary to-secondary rounded-2xl p-8 flex flex-col items-center justify-center text-center text-white shadow-xl shadow-blue-200">
+        <div className="hover-lift bg-linear-to-br from-primary to-secondary rounded-2xl p-8 flex flex-col items-center justify-center text-center text-white shadow-xl shadow-blue-200 will-change-transform">
           <div className="text-5xl mb-6">🏆</div>
           <h3 className="text-xl font-bold mb-2">경진대회 프로젝트</h3>
           <p className="text-sm opacity-90 mb-6">
