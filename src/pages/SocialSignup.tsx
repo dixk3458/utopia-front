@@ -64,10 +64,11 @@ export default function SocialSignup() {
       await checkAuth();
 
       navigate('/home', { replace: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { detail?: string; message?: string } } };
       alert(
-        error?.response?.data?.detail ||
-          error?.response?.data?.message ||
+        axiosError?.response?.data?.detail ||
+          axiosError?.response?.data?.message ||
           '회원가입에 실패했습니다.',
       );
     } finally {

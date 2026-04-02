@@ -13,10 +13,10 @@ import {
 } from '../libs/partyapi';
 
 const STATUS_LABEL: Record<string, string> = {
-  RECRUITING: '모집중',
-  FULL: '마감',
-  COMPLETED: '완료',
-  CANCELED: '취소',
+  recruiting: '모집중',
+  full: '마감',
+  completed: '완료',
+  canceled: '취소',
 };
 
 const CATEGORY_COLOR: Record<string, string> = {
@@ -56,13 +56,13 @@ function SearchBar({ onSearch }: { onSearch: (q: string) => void }) {
 // ── PartyCard ─────────────────────────────────────────────────────────────
 function PartyCard({ party, onApply }: { party: Party; onApply: (p: Party) => void }) {
   const navigate = useNavigate();
-  const isFull = party.status !== 'RECRUITING';
+  const isFull = party.status !== 'recruiting';
 
   return (
     <div className="bg-card rounded-2xl p-5 shadow-sm border border-border flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all">
       <div className="flex items-center justify-between">
         <div className="flex gap-1.5 flex-wrap">
-          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${party.status === 'RECRUITING' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${party.status === 'recruiting' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
             {STATUS_LABEL[party.status ?? ''] || '모집중'}
           </span>
           {party.category_name && (

@@ -48,7 +48,7 @@ export default function Chat() {
 
   // 유저 정보 먼저 가져오기
   useEffect(() => {
-    api.get('/me').then(({ data }) => {
+    api.get('/api/me').then(({ data }) => {
       if (data.is_logged_in && data.user) {
         setNickname(data.user.nickname);
         setUserId(data.user.id);

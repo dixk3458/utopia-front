@@ -45,7 +45,6 @@ export default function Sidebar() {
         ? 'bg-blue-50 text-primary'
         : 'text-slate-700 hover:bg-slate-100',
     ].join(' ');
-  console.log('sidebar user', user);
   return (
     <aside className="flex min-h-screen w-72 flex-col border-r border-slate-200 bg-white px-5 py-8">
       <Link to="/home" className="mb-10 flex items-center gap-3 px-2">

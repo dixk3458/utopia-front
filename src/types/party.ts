@@ -1,4 +1,4 @@
-export type PartyStatus = 'RECRUITING' | 'FULL' | 'COMPLETED' | 'CANCELED';
+export type PartyStatus = 'recruiting' | 'full' | 'completed' | 'canceled';
 
 export interface Party {
   // ✅ Fix: 백엔드 응답 필드명에 맞게 수정 (party_id → id, host_id → leader_id 등)
