@@ -11,7 +11,7 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const url = error.config?.url;
 
-    if (status === 401 && url !== '/me') {
+    if (status === 401 && url !== '/api/me') {
       console.log('로그인이 만료되었습니다.');
       window.dispatchEvent(new Event('auth-changed'));
     }

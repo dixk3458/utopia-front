@@ -125,7 +125,12 @@ export default function Signup() {
     }
 
     try {
-      const response = await api.post('/api/users', form, {
+      const response = await api.post('/api/users', {
+        email: form.email,
+        nickname: form.nickname,
+        password: form.password,
+        phone: form.phone_number || undefined,
+      }, {
         headers: { 'X-Captcha-Token': captchaToken },
       });
       if (response.status === 200 || response.status === 201) {
