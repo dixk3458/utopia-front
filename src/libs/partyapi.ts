@@ -18,33 +18,32 @@ export const categoryKeys = {
 };
 
 export const fetchCategories = async (): Promise<Category[]> => {
-  const { data } = await api.get('/parties/categories');
+  const { data } = await api.get('/api/parties/categories');
   return data;
 };
 
 export const fetchParties = async (params: {
-  // ✅ Fix: category_id(UUID) → category(문자열) 로 파라미터명 변경
   category?: string;
   service_id?: string;
   search?: string;
   page?: number;
   size?: number;
 }): Promise<PartyListResponse> => {
-  const { data } = await api.get('/parties', { params });
+  const { data } = await api.get('/api/parties', { params });
   return data;
 };
 
 export const fetchParty = async (id: string): Promise<Party> => {
-  const { data } = await api.get(`/parties/${id}`);
+  const { data } = await api.get(`/api/parties/${id}`);
   return data;
 };
 
 export const applyParty = async (partyId: string): Promise<{ message: string }> => {
-  const { data } = await api.post(`/parties/${partyId}/join`);
+  const { data } = await api.post(`/api/parties/${partyId}/join`);
   return data;
 };
 
 export const fetchLatestNotifications = async (): Promise<SystemNotification[]> => {
-  const { data } = await api.get('/notifications/latest');
+  const { data } = await api.get('/api/notifications/latest');
   return data;
 };
